@@ -1,3 +1,6 @@
+// Neargye/magic_enum <https://github.com/Neargye/magic_enum>
+// commit 49bb72d, Oct 19 2023
+
 //  __  __             _        ______                          _____
 // |  \/  |           (_)      |  ____|                        / ____|_     _
 // | \  / | __ _  __ _ _  ___  | |__   _ __  _   _ _ __ ___   | |   _| |_ _| |_
