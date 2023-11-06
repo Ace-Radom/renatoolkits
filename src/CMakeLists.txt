@@ -1,4 +1,9 @@
-aux_source_directory(. RENATOOLKITSSRCLIST)
+set(RENATOOLKITSSRCLIST "")
+if(NOT RENATOOLKITS_NO_RICH)
+    add_subdirectory(rich)
+    set(RENATOOLKITSSRCLIST ${RENATOOLKITSSRCLIST} ${RICHSRC})
+endif()
+# message(STATUS ${RENATOOLKITSSRCLIST})
 add_library(renatoolkits STATIC
     ${RENATOOLKITSSRCLIST}
 )

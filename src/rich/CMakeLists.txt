@@ -1,0 +1,3 @@
+set(RICHSRC
+    ${CMAKE_CURRENT_SOURCE_DIR}/rich.cpp
+PARENT_SCOPE)
