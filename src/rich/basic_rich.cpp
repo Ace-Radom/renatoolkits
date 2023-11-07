@@ -1,5 +1,7 @@
 #include"rich.h"
 
+// here: things under rena::rich::win32u and rich_global_init()
+
 #if RICH_COLOR_TYPE == RC_WINAPI
 
 CONSOLE_SCREEN_BUFFER_INFO rena::rich::win32u::_csbufinfo;

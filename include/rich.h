@@ -4,6 +4,7 @@
 #define _RICH_H_
 
 #include<iostream>
+#include<string>
 #include<bitset>
 #ifdef _WIN32
 #include<Windows.h>
@@ -60,7 +61,7 @@ namespace rena {
             BRIGHTBLUE    = 94,
             BRIGHTMAGENTA = 95,
             BRIGHTCYAN    = 96,
-            BRIGHTWHITE   = 97,
+            BRIGHTWHITE   = 97
         };
 
         /**
@@ -82,7 +83,7 @@ namespace rena {
             BRIGHTBLUE    = 104,
             BRIGHTMAGENTA = 105,
             BRIGHTCYAN    = 106,
-            BRIGHTWHITE   = 107,
+            BRIGHTWHITE   = 107
         };
 
         /**
@@ -106,8 +107,174 @@ namespace rena {
         template <class _Elem , class _Traits>
         inline std::basic_ostream<_Elem,_Traits>& style_reset( std::basic_ostream<_Elem,_Traits>& __os );
 
+        /**
+         * @brief clear one line's characters
+        */
         template <class _Elem , class _Traits>
         inline std::basic_ostream<_Elem,_Traits>& clear_line( std::basic_ostream<_Elem,_Traits>& __os );
+
+#pragma region RC_ANSI_ONLY
+
+#if RICH_COLOR_TYPE == RC_ANSI
+
+        /**
+         * @brief enum class FStyle (Foreground text Style: bold, dim, itatic, underline)
+         * 
+         * @note if you're using Windows and undefined RICH_USE_ANSI_COLOR_ONLY in CMakeLists.txt, FStyle will not be available
+        */
+        enum class FStyle : int {
+            BOLD   = 256,
+            ITATIC = 512,
+            DIM    = 1024,
+            ULINE  = 2048 // underline
+        };
+
+        inline FColor operator|( FColor __fc , FStyle __ft ){ return static_cast<FColor>( static_cast<unsigned int>( __fc ) | static_cast<unsigned int>( __ft ) ); }
+        inline FColor operator|( FStyle __ft , FColor __fc ){ return static_cast<FColor>( static_cast<unsigned int>( __fc ) | static_cast<unsigned int>( __ft ) ); }
+        inline FStyle operator|( FStyle __ftl , FStyle __ftr ){ return static_cast<FStyle>( static_cast<unsigned int>( __ftl ) | static_cast<unsigned int>( __ftr ) ); }
+
+        /**
+         * @brief push one fontground style to ostream
+        */
+        template <class _Elem , class _Traits>
+        inline std::basic_ostream<_Elem,_Traits>& operator<<( std::basic_ostream<_Elem,_Traits>& __os , FStyle __fs );
+
+#define RICH_BACKGROUND_COLOR 0
+#define RICH_FOREGROUND_COLOR 1
+
+
+        /**
+         * @brief Basic_EightBitColor Class: build a 8bit color ANSI code
+        */
+        class EightBitColor {
+            public:
+                enum class Grayscale : unsigned short {
+                    Grayscale0  = 232,
+                    Grayscale1  = 233,
+                    Grayscale2  = 234,
+                    Grayscale3  = 235,
+                    Grayscale4  = 236,
+                    Grayscale5  = 237,
+                    Grayscale6  = 238,
+                    Grayscale7  = 239,
+                    Grayscale8  = 240,
+                    Grayscale9  = 241,
+                    Grayscale10 = 242,
+                    Grayscale11 = 243,
+                    Grayscale12 = 244,
+                    Grayscale13 = 245,
+                    Grayscale14 = 246,
+                    Grayscale15 = 247,
+                    Grayscale16 = 248,
+                    Grayscale17 = 249,
+                    Grayscale18 = 250,
+                    Grayscale19 = 251,
+                    Grayscale20 = 252,
+                    Grayscale21 = 253,
+                    Grayscale22 = 254,
+                    Grayscale23 = 255
+                }; // enum class Grayscale
+
+            public:
+                /**
+                 * @brief build a 8bit color ANSI code with a single color-code (from 0 ~ 255)
+                 * 
+                 * @param __code single color-code (from 0 ~ 255)
+                 * @param __fob fore- or background color (use RICH_BACKGROUND_COLOR or RICH_FOREGROUND_COLOR)
+                */
+                inline EightBitColor( unsigned short __code , bool __fob ){
+                    this -> code = __code;
+                    this -> fob = __fob;
+                    return;
+                }
+
+                /**
+                 * @brief build a 8bit color ANSI code with rgb
+                 * 
+                 * @param __r red (0 ~ 5)
+                 * @param __g green (0 ~ 5)
+                 * @param __b blue (0 ~ 5)
+                 * @param __fob fore- or background color (use RICH_BACKGROUND_COLOR or RICH_FOREGROUND_COLOR)
+                */
+                inline EightBitColor( unsigned short __r , unsigned short __g , unsigned short __b , bool __fob ){
+#define _MAX_5( x ) ( x <= 5 ? x : 5 )
+                    this -> code = _MAX_5( __r ) * 36 + _MAX_5( __g ) * 6 + _MAX_5( __b ) + 16;
+                    this -> fob = __fob;
+#undef _MAX_5
+                    return;
+                }
+
+                /**
+                 * @brief build a 8bit color ANSI code for grayscale (232 ~ 255)
+                 * 
+                 * @param __g Grayscale (use defs under enum class rena::rich::EightBitColor::Grayscale)
+                 * @param __fob fore- or background color (use RICH_BACKGROUND_COLOR or RICH_FOREGROUND_COLOR)
+                */
+                inline EightBitColor( Grayscale __g , bool __fob ){
+                    this -> code = static_cast<unsigned short>( __g );
+                    this -> fob = __fob;
+                    return;
+                }
+                ~EightBitColor(){};
+
+                template <class _Elem , class _Traits>
+                inline void _dump_ANSI_code( std::basic_ostream<_Elem,_Traits>& __os ) const {
+                    __os << "\033[" << ( this -> fob ? "38;5;" : "48;5;" ) << this -> code << "m";
+                    return;
+                }
+
+            private:
+                unsigned short code;
+                bool fob; // foreground or background
+        }; // class EightBitColor
+
+        template <class _Elem , class _Traits>
+        inline std::basic_ostream<_Elem,_Traits>& operator<<( std::basic_ostream<_Elem,_Traits>& __os , const EightBitColor& __8bitc );
+
+        class TrueColor {
+            public:
+                /**
+                 * @brief build a 24bit true color ANSI code with rgb
+                 * 
+                 * @param __r red (0 ~ 255)
+                 * @param __g green (0 ~ 255)
+                 * @param __b blue (0 ~ 255)
+                 * @param __fob fore- or background color (use RICH_BACKGROUND_COLOR or RICH_FOREGROUND_COLOR)
+                */
+                inline TrueColor( unsigned short __r , unsigned short __g , unsigned short __b , bool __fob ){
+#define _MAX_255( x ) ( x <= 255 ? x : 255 )
+                    this -> r = _MAX_255( __r );
+                    this -> g = _MAX_255( __g );
+                    this -> b = _MAX_255( __b );
+                    this -> fob = __fob;
+#undef _MAX_255
+                }
+                inline ~TrueColor(){};
+                
+                template <class _Elem , class _Traits>
+                inline void _dump_ANSI_code( std::basic_ostream<_Elem,_Traits>& __os ) const {
+                    __os << "\033[" << ( this -> fob ? "38;2;" : "48;2;" ) << this -> r << ";"
+                                                                           << this -> g << ";"
+                                                                           << this -> b << "m";
+                    return;
+                }
+
+            private:
+                unsigned short r;
+                unsigned short g;
+                unsigned short b;
+                bool fob;
+        }; // class TrueColor
+
+        template <class _Elem , class _Traits>
+        inline std::basic_ostream<_Elem,_Traits>& operator<<( std::basic_ostream<_Elem,_Traits>& __os , const TrueColor& __tc );
+
+#undef _TO_PCHAR_OR_PWCHAR
+#undef _TO_STR_OR_WSTR
+
+#endif // RICH_COLOR_TYPE == RC_ANSI
+
+#pragma endregion RC_ANSI_ONLY
 
         void rich_global_init();
 
@@ -116,7 +283,7 @@ namespace rena {
 }; // namespace rena
 
 template <class _Elem , class _Traits>
-inline std::basic_ostream<_Elem,_Traits>& rena::rich::operator<<( std::basic_ostream<_Elem,_Traits>& __os , rena::rich::FColor __fc ){
+std::basic_ostream<_Elem,_Traits>& rena::rich::operator<<( std::basic_ostream<_Elem,_Traits>& __os , rena::rich::FColor __fc ){
 
 #if RICH_COLOR_TYPE == RC_WINAPI
 
@@ -148,7 +315,15 @@ inline std::basic_ostream<_Elem,_Traits>& rena::rich::operator<<( std::basic_ost
 
     unsigned int chandle = static_cast<unsigned int>( __fc );
     unsigned int cpart = std::bitset<8>( chandle ).to_ulong(); // color part
-    __os << "\033[" << cpart << "m" << std::flush;
+    __os << "\033[" << cpart;
+
+    if ( chandle & static_cast<unsigned int>( rena::rich::FStyle::BOLD   ) ) __os << ";1";
+    if ( chandle & static_cast<unsigned int>( rena::rich::FStyle::DIM    ) ) __os << ";2";
+    if ( chandle & static_cast<unsigned int>( rena::rich::FStyle::ITATIC ) ) __os << ";3";
+    if ( chandle & static_cast<unsigned int>( rena::rich::FStyle::ULINE  ) ) __os << ";4";
+    // has FStyle
+
+    __os << "m" << std::flush;
 
 #endif // using ANSI
 
@@ -225,5 +400,52 @@ std::basic_ostream<_Elem,_Traits>& rena::rich::clear_line( std::basic_ostream<_E
 
     return __os;
 }
+
+#if RICH_COLOR_TYPE == RC_ANSI
+
+template <class _Elem , class _Traits>
+std::basic_ostream<_Elem,_Traits>& rena::rich::operator<<( std::basic_ostream<_Elem,_Traits>& __os , FStyle __fs ){
+    bool one_pushed = false;
+    unsigned int shandle = static_cast<unsigned int>( __fs );
+    __os << "\033[";
+
+#define FSTYLE_ANSI_PUSH( os , code ) {     \
+        if ( !one_pushed )                  \
+        {                                   \
+            one_pushed = true;              \
+            os << #code;                    \
+        }                                   \
+        else                                \
+        {                                   \
+            os << ";" << #code;             \
+        }                                   \
+    }
+
+    if ( shandle & static_cast<unsigned int>( rena::rich::FStyle::BOLD   ) ) FSTYLE_ANSI_PUSH( __os , 1 );
+    if ( shandle & static_cast<unsigned int>( rena::rich::FStyle::DIM    ) ) FSTYLE_ANSI_PUSH( __os , 2 );
+    if ( shandle & static_cast<unsigned int>( rena::rich::FStyle::ITATIC ) ) FSTYLE_ANSI_PUSH( __os , 3 );
+    if ( shandle & static_cast<unsigned int>( rena::rich::FStyle::ULINE  ) ) FSTYLE_ANSI_PUSH( __os , 4 );
+
+#undef FSTYLE_ANSI_PUSH
+
+    __os << "m" << std::flush;
+    return __os;
+}
+
+template <class _Elem , class _Traits>
+std::basic_ostream<_Elem,_Traits>& rena::rich::operator<<( std::basic_ostream<_Elem,_Traits>& __os , const rena::rich::EightBitColor& __8bitc ){
+    __8bitc._dump_ANSI_code( __os );
+    __os << std::flush;
+    return __os;
+}
+
+template <class _Elem , class _Traits>
+std::basic_ostream<_Elem,_Traits>& rena::rich::operator<<( std::basic_ostream<_Elem,_Traits>& __os , const rena::rich::TrueColor& __tc ){
+    __tc._dump_ANSI_code( __os );
+    __os << std::flush;
+    return __os;
+}
+
+#endif // RICH_COLOR_TYPE == RC_ANSI
 
 #endif
