@@ -11,8 +11,14 @@
 #include<variant>
 #include<unordered_map>
 #include<regex>
+#include<codecvt>
 #ifdef _WIN32
 #include<Windows.h>
+#endif
+
+#ifdef _MSC_VER
+#pragma warning( push )
+#pragma warning( disable : 4996 )
 #endif
 
 namespace rena {
@@ -299,8 +305,8 @@ namespace rena {
 #else
                     typedef std::variant<FColor,FStyle,BColor> _enabled_color_enum;     // RC_ANSI
 #endif // RICH_COLOR_TYPE == RC_WINAPI
-                    template <class _Elem , class _Traits>
-                    void _render_str( std::basic_ostream<_Elem,_Traits>& __os , const std::string& __str ) const;
+                    void _render_str( std::ostream& __os , const std::string& __str ) const;
+                    void _render_wstr( std::wostream& __os , const std::wstring& __wstr ) const;
 
                 private:
                     /**
@@ -380,13 +386,31 @@ namespace rena {
 
                 template <class _Elem , class _Traits>
                 inline void _render( std::basic_ostream<_Elem,_Traits>& __os ) const {
-                    _render_str( __os , this -> rich_str );
+                    this -> _render_str( __os , this -> rich_str );
                     return;
                 }
 
             private:
                 std::string rich_str;
         }; // class RichText
+
+        class wRichText : public __base::basic_stylisation<wRichText> {
+            public:
+                inline wRichText()
+                    : basic_stylisation(){};
+                inline wRichText( const std::wstring& __wrt )
+                    : basic_stylisation() , rich_wstr( __wrt ){};
+                inline ~wRichText(){};
+
+                template <class _Elem , class _Traits>
+                inline void _render( std::basic_ostream<_Elem,_Traits>& __os ) const {
+                    this -> _render_wstr( __os , this -> rich_wstr );
+                    return;
+                }
+
+            private:
+                std::wstring rich_wstr;
+        }; // class wRichText
 
         template <class _Elem , class _Traits , class _T>
         std::basic_ostream<_Elem,_Traits>& operator<<( std::basic_ostream<_Elem,_Traits>& __os , const __base::basic_stylisation<_T>& __s );
@@ -568,8 +592,7 @@ std::basic_ostream<_Elem,_Traits>& rena::rich::operator<<( std::basic_ostream<_E
 #endif // RICH_COLOR_TYPE == RC_ANSI
 
 template <class _T>
-template <class _Elem , class _Traits>
-void rena::rich::__base::basic_stylisation<_T>::_render_str( std::basic_ostream<_Elem,_Traits>& __os , const std::string& __str ) const {
+void rena::rich::__base::basic_stylisation<_T>::_render_str( std::ostream& __os , const std::string& __str ) const {
     std::stack<_enabled_color_enum> style_stack;
 
     std::regex reg( R"(\\\[.*?\]|\[(.*?)\])" );
@@ -622,12 +645,73 @@ void rena::rich::__base::basic_stylisation<_T>::_render_str( std::basic_ostream<
     return;
 }
 
+#define CPWTOACONV( wstr ) std::wstring_convert<std::codecvt_utf8<wchar_t>>{}.to_bytes( wstr )
+
+template <class _T>
+void rena::rich::__base::basic_stylisation<_T>::_render_wstr( std::wostream& __os , const std::wstring& __wstr ) const {
+    std::stack<_enabled_color_enum> style_stack;
+
+    std::wregex reg( LR"(\\\[.*?\]|\[(.*?)\])" );
+    std::wsregex_iterator it( __wstr.begin() , __wstr.end() , reg );
+    std::wsregex_iterator end;
+    size_t this_substr_copy_begin_pos = 0;
+    while ( it != end )
+    {
+        std::wsmatch matched_tag = *it;
+        std::wstring matched_tag_wstr = matched_tag.str();
+        __os << __wstr.substr( this_substr_copy_begin_pos , matched_tag.position() - this_substr_copy_begin_pos );
+        if ( matched_tag_wstr[0] == L'\\' )
+        {
+            __os << matched_tag_wstr.substr( 1 );
+        } // \[]
+        else
+        {
+            if ( matched_tag_wstr == L"[/]" )
+            {
+                if ( style_stack.empty() )
+                {
+                    __os << matched_tag_wstr;
+                } // empty style stack
+                else
+                {
+                    __os << style_reset;
+                    style_stack.pop();
+                    std::stack<_enabled_color_enum> style_stack_copy( style_stack );
+                    while ( !style_stack_copy.empty() )
+                    {
+                        this -> _dump_enabled_color_enum_to_os( __os , style_stack_copy.top() );
+                        style_stack_copy.pop();
+                    }
+                }
+            } // [/]
+            else if ( this -> color_list.find( CPWTOACONV( matched_tag_wstr ) ) == this -> color_list.end() )
+            {
+                __os << matched_tag_wstr;
+            } // illegal tag
+            else
+            {
+                this -> _dump_enabled_color_enum_to_os( __os , this -> color_list.at( CPWTOACONV( matched_tag_wstr ) ) );
+                style_stack.push( this -> color_list.at( CPWTOACONV( matched_tag_wstr ) ) ); 
+            } // legal tag
+        } // []
+        this_substr_copy_begin_pos = matched_tag.position() + matched_tag_wstr.size();
+        ++it;
+    }
+    __os << __wstr.substr( this_substr_copy_begin_pos ) << style_reset;
+}
+
+#undef CPWTOACONV
+
 template <class _Elem , class _Traits , class _T>
 std::basic_ostream<_Elem,_Traits>& rena::rich::operator<<( std::basic_ostream<_Elem,_Traits>& __os , const rena::rich::__base::basic_stylisation<_T>& __s ){
     __s.render( __os );
     return __os;
 }
 
-#pragma endregion FUNCTION_DEFS
+#pragma endregion FUNCTION_DEFS\
+
+#ifdef _MSC_VER
+#pragma warning( pop )
+#endif
 
 #endif
