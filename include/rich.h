@@ -288,8 +288,8 @@ namespace rena {
                     inline ~basic_stylisation(){};
 
                     template <class _Elem , class _Traits>
-                    inline void render( std::basic_ostream<_Elem,_Traits>& __os ){
-                        _T* pT = static_cast<_T*>( this );
+                    inline void render( std::basic_ostream<_Elem,_Traits>& __os ) const {
+                        _T* pT = ( _T* ) ( this );
                         pT -> _render( __os );
                     }
 
@@ -379,7 +379,7 @@ namespace rena {
                 inline ~RichText(){};
 
                 template <class _Elem , class _Traits>
-                inline void _render( std::basic_ostream<_Elem,_Traits>& __os ){
+                inline void _render( std::basic_ostream<_Elem,_Traits>& __os ) const {
                     _render_str( __os , this -> rich_str );
                     return;
                 }
@@ -389,7 +389,7 @@ namespace rena {
         }; // class RichText
 
         template <class _Elem , class _Traits , class _T>
-        std::basic_ostream<_Elem,_Traits>& rena::rich::operator<<( std::basic_ostream<_Elem,_Traits>& __os , __base::basic_stylisation<_T>& __s );
+        std::basic_ostream<_Elem,_Traits>& rena::rich::operator<<( std::basic_ostream<_Elem,_Traits>& __os , const __base::basic_stylisation<_T>& __s );
 
 #pragma endregion STYLISATION_OUTPUT
 
@@ -623,7 +623,7 @@ void rena::rich::__base::basic_stylisation<_T>::_render_str( std::basic_ostream<
 }
 
 template <class _Elem , class _Traits , class _T>
-std::basic_ostream<_Elem,_Traits>& rena::rich::operator<<( std::basic_ostream<_Elem,_Traits>& __os , rena::rich::__base::basic_stylisation<_T>& __s ){
+std::basic_ostream<_Elem,_Traits>& rena::rich::operator<<( std::basic_ostream<_Elem,_Traits>& __os , const rena::rich::__base::basic_stylisation<_T>& __s ){
     __s.render( __os );
     return __os;
 }
