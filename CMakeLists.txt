@@ -14,6 +14,14 @@ if(RENATOOLKITS_NO_MAGIC_ENUM)
     add_definitions(-D__RENATOOLKITS_NO_MAGIC_ENUM__)
 endif()
 
+if(RENATOOLKITS_NO_CMDLINE)
+    add_definitions(-D__RENATOOLKITS_NO_CMDLINE__)
+endif()
+
+if(RENATOOLKITS_NO_KBE)
+    add_definitions(-D__RENATOOLKITS_NO_KBE__)
+endif()
+
 include_directories(include)
 add_subdirectory(src)
 
