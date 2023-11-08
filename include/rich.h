@@ -389,7 +389,7 @@ namespace rena {
         }; // class RichText
 
         template <class _Elem , class _Traits , class _T>
-        std::basic_ostream<_Elem,_Traits>& rena::rich::operator<<( std::basic_ostream<_Elem,_Traits>& __os , const __base::basic_stylisation<_T>& __s );
+        std::basic_ostream<_Elem,_Traits>& operator<<( std::basic_ostream<_Elem,_Traits>& __os , const __base::basic_stylisation<_T>& __s );
 
 #pragma endregion STYLISATION_OUTPUT
 
