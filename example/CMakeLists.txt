@@ -4,3 +4,9 @@ add_executable(example_rich
 target_link_libraries(example_rich
     renatoolkits
 )
+add_executable(example_cmdline
+    ${CMAKE_CURRENT_SOURCE_DIR}/example_cmdline.cpp
+)
+target_link_libraries(example_cmdline
+    renatoolkits
+)
