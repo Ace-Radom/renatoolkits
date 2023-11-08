@@ -6,6 +6,11 @@
 #include<iostream>
 #include<string>
 #include<bitset>
+#include<stack>
+#include<vector>
+#include<variant>
+#include<unordered_map>
+#include<regex>
 #ifdef _WIN32
 #include<Windows.h>
 #endif
@@ -142,10 +147,6 @@ namespace rena {
 #define RICH_BACKGROUND_COLOR 0
 #define RICH_FOREGROUND_COLOR 1
 
-
-        /**
-         * @brief Basic_EightBitColor Class: build a 8bit color ANSI code
-        */
         class EightBitColor {
             public:
                 enum class Grayscale : unsigned short {
@@ -276,11 +277,129 @@ namespace rena {
 
 #pragma endregion RC_ANSI_ONLY
 
+#pragma region STYLISATION_OUTPUT
+
+        namespace __base {
+
+            template <class _T>
+            class basic_stylisation {
+                public:
+                    inline basic_stylisation(){};
+                    inline ~basic_stylisation(){};
+
+                    template <class _Elem , class _Traits>
+                    inline void render( std::basic_ostream<_Elem,_Traits>& __os ){
+                        _T* pT = static_cast<_T*>( this );
+                        pT -> _render( __os );
+                    }
+
+                protected:
+#if RICH_COLOR_TYPE == RC_WINAPI
+                    typedef std::variant<FColor , BColor> _enabled_color_enum;          // RC_WINAPI
+#else
+                    typedef std::variant<FColor,FStyle,BColor> _enabled_color_enum;     // RC_ANSI
+#endif // RICH_COLOR_TYPE == RC_WINAPI
+                    template <class _Elem , class _Traits>
+                    void _render_str( std::basic_ostream<_Elem,_Traits>& __os , const std::string& __str ) const;
+
+                private:
+                    /**
+                     * should never be used or called
+                    */
+                    template <class _Elem , class _Traits>
+                    inline void _render( std::basic_ostream<_Elem,_Traits>& __os ) const {};
+
+                    template <class _Elem , class _Traits>
+                    inline void _dump_enabled_color_enum_to_os( std::basic_ostream<_Elem,_Traits>& __os , _enabled_color_enum __c ) const {
+                        if ( std::holds_alternative<FColor>( __c ) )
+                            __os << std::get<FColor>( __c );
+                        else if ( std::holds_alternative<BColor>( __c ) )
+                            __os << std::get<BColor>( __c );
+#if RICH_COLOR_TYPE == RC_ANSI
+                        else if ( std::holds_alternative<FStyle>( __c ) )
+                            __os << std::get<FStyle>( __c );
+#endif // RICH_COLOR_TYPE == RC_ANSI
+                        return;
+                    }
+
+                    typedef std::unordered_map<std::string,_enabled_color_enum> _color_list_t;
+                    const _color_list_t color_list = {
+#if RICH_COLOR_TYPE == RC_ANSI
+                        { "[bold]"             , rena::rich::FStyle::BOLD          },
+                        { "[dim]"              , rena::rich::FStyle::DIM           },
+                        { "[italic]"           , rena::rich::FStyle::ITATIC        },
+                        { "[underline]"        , rena::rich::FStyle::ULINE         },
+#endif // RICH_COLOR_TYPE == RC_ANSI
+                        { "[black]"            , rena::rich::FColor::BLACK         },
+                        { "[red]"              , rena::rich::FColor::RED           },
+                        { "[green]"            , rena::rich::FColor::GREEN         },
+                        { "[yellow]"           , rena::rich::FColor::YELLOW        },
+                        { "[blue]"             , rena::rich::FColor::BLUE          },
+                        { "[magenta]"          , rena::rich::FColor::MAGENTA       },
+                        { "[cyan]"             , rena::rich::FColor::CYAN          },
+                        { "[white]"            , rena::rich::FColor::WHITE         },
+                        { "[gray]"             , rena::rich::FColor::GRAY          },
+                        { "[bright black]"     , rena::rich::FColor::GRAY          },
+                        { "[bright red]"       , rena::rich::FColor::BRIGHTRED     },
+                        { "[bright green]"     , rena::rich::FColor::BRIGHTGREEN   },
+                        { "[bright yellow]"    , rena::rich::FColor::BRIGHTYELLOW  },
+                        { "[bright blue]"      , rena::rich::FColor::BRIGHTBLUE    },
+                        { "[bright magenta]"   , rena::rich::FColor::BRIGHTMAGENTA },
+                        { "[bright cyan]"      , rena::rich::FColor::BRIGHTCYAN    },
+                        { "[bright white]"     , rena::rich::FColor::BRIGHTWHITE   },
+                        { "[b-black]"          , rena::rich::BColor::BLACK         },
+                        { "[b-red]"            , rena::rich::BColor::RED           },
+                        { "[b-green]"          , rena::rich::BColor::GREEN         },
+                        { "[b-yellow]"         , rena::rich::BColor::YELLOW        },
+                        { "[b-blue]"           , rena::rich::BColor::BLUE          },
+                        { "[b-magenta]"        , rena::rich::BColor::MAGENTA       },
+                        { "[b-cyan]"           , rena::rich::BColor::CYAN          },
+                        { "[b-white]"          , rena::rich::BColor::WHITE         },
+                        { "[b-gray]"           , rena::rich::BColor::GRAY          },
+                        { "[b-bright black]"   , rena::rich::BColor::GRAY          },
+                        { "[b-bright red]"     , rena::rich::BColor::BRIGHTRED     },
+                        { "[b-bright green]"   , rena::rich::BColor::BRIGHTGREEN   },
+                        { "[b-bright yellow]"  , rena::rich::BColor::BRIGHTYELLOW  },
+                        { "[b-bright blue]"    , rena::rich::BColor::BRIGHTBLUE    },
+                        { "[b-bright magenta]" , rena::rich::BColor::BRIGHTMAGENTA },
+                        { "[b-bright cyan]"    , rena::rich::BColor::BRIGHTCYAN    },
+                        { "[b-bright white]"   , rena::rich::BColor::BRIGHTWHITE   }
+                    }; // static const _color_list_t color_list
+
+            }; // class basic_stylisation
+            
+        }; // namespace __base
+
+        class RichText : public __base::basic_stylisation<RichText> {
+            public:
+                inline RichText()
+                    : basic_stylisation(){};
+                inline RichText( const std::string& __rt )
+                    : basic_stylisation() , rich_str( __rt ){};
+                inline ~RichText(){};
+
+                template <class _Elem , class _Traits>
+                inline void _render( std::basic_ostream<_Elem,_Traits>& __os ){
+                    _render_str( __os , this -> rich_str );
+                    return;
+                }
+
+            private:
+                std::string rich_str;
+        }; // class RichText
+
+        template <class _Elem , class _Traits , class _T>
+        std::basic_ostream<_Elem,_Traits>& rena::rich::operator<<( std::basic_ostream<_Elem,_Traits>& __os , __base::basic_stylisation<_T>& __s );
+
+#pragma endregion STYLISATION_OUTPUT
+
         void rich_global_init();
 
     }; // namespace rich
 
 }; // namespace rena
+
+#pragma region FUNCTION_DEFS
 
 template <class _Elem , class _Traits>
 std::basic_ostream<_Elem,_Traits>& rena::rich::operator<<( std::basic_ostream<_Elem,_Traits>& __os , rena::rich::FColor __fc ){
@@ -447,5 +566,68 @@ std::basic_ostream<_Elem,_Traits>& rena::rich::operator<<( std::basic_ostream<_E
 }
 
 #endif // RICH_COLOR_TYPE == RC_ANSI
+
+template <class _T>
+template <class _Elem , class _Traits>
+void rena::rich::__base::basic_stylisation<_T>::_render_str( std::basic_ostream<_Elem,_Traits>& __os , const std::string& __str ) const {
+    std::stack<_enabled_color_enum> style_stack;
+
+    std::regex reg( R"(\\\[.*?\]|\[(.*?)\])" );
+    std::sregex_iterator it( __str.begin() , __str.end() , reg );
+    std::sregex_iterator end;
+    size_t this_substr_copy_begin_pos = 0;
+    while ( it != end )
+    {
+        std::smatch matched_tag = *it;
+        std::string matched_tag_str = matched_tag.str();
+        __os << __str.substr( this_substr_copy_begin_pos , matched_tag.position() - this_substr_copy_begin_pos );
+        if ( matched_tag_str[0] == '\\' )
+        {
+            __os << matched_tag_str.substr( 1 );
+        } // \[]
+        else
+        {
+            if ( matched_tag_str == "[/]" )
+            {
+                if ( style_stack.empty() )
+                {
+                    __os << matched_tag_str;
+                } // empty style stack
+                else
+                {
+                    __os << style_reset;
+                    style_stack.pop();
+                    std::stack<_enabled_color_enum> style_stack_copy( style_stack );
+                    while ( !style_stack_copy.empty() )
+                    {
+                        this -> _dump_enabled_color_enum_to_os( __os , style_stack_copy.top() );
+                        style_stack_copy.pop();
+                    }
+                }
+            } // [/]
+            else if ( this -> color_list.find( matched_tag_str ) == this -> color_list.end() )
+            {
+                __os << matched_tag_str;
+            } // illegal tag
+            else
+            {
+                this -> _dump_enabled_color_enum_to_os( __os , this -> color_list.at( matched_tag_str ) );
+                style_stack.push( this -> color_list.at( matched_tag_str ) ); 
+            } // legal tag
+        } // []
+        this_substr_copy_begin_pos = matched_tag.position() + matched_tag_str.size();
+        ++it;
+    }                        
+    __os << __str.substr( this_substr_copy_begin_pos ) << style_reset;
+    return;
+}
+
+template <class _Elem , class _Traits , class _T>
+std::basic_ostream<_Elem,_Traits>& rena::rich::operator<<( std::basic_ostream<_Elem,_Traits>& __os , rena::rich::__base::basic_stylisation<_T>& __s ){
+    __s.render( __os );
+    return __os;
+}
+
+#pragma endregion FUNCTION_DEFS
 
 #endif
