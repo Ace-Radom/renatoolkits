@@ -1,0 +1,3 @@
+set(KBESRC
+    ${CMAKE_CURRENT_SOURCE_DIR}/kbe.cpp
+PARENT_SCOPE)

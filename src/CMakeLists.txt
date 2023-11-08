@@ -3,7 +3,10 @@ if(NOT RENATOOLKITS_NO_RICH)
     add_subdirectory(rich)
     set(RENATOOLKITSSRCLIST ${RENATOOLKITSSRCLIST} ${RICHSRC})
 endif()
-# message(STATUS ${RENATOOLKITSSRCLIST})
+if(NOT RENATOOLKITS_NO_KBE)
+    add_subdirectory(kbe)
+    set(RENATOOLKITSSRCLIST ${RENATOOLKITSSRCLIST} ${KBESRC})
+endif()
 add_library(renatoolkits STATIC
     ${RENATOOLKITSSRCLIST}
 )

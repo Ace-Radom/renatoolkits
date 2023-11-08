@@ -15,4 +15,8 @@
 #include"cmdline.h"             // in namespace rena::cmdline
 #endif
 
+#ifndef __RENATOOLKITS_NO_KBE__
+#include"kbe.h"                 // in namespace rena::kbe
+#endif
+
 #endif
