@@ -11,4 +11,8 @@
 #include"magic_enum_all.h"      // in namespace magic_enum
 #endif
 
+#ifndef __RENATOOLKITS_NO_CMDLINE__
+#include"cmdline.h"             // in namespace rena::cmdline
+#endif
+
 #endif
